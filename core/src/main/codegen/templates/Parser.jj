@@ -4485,6 +4485,18 @@ SqlNode StringLiteral() :
                 RESOURCE.unknownCharacterSet(charSet));
         }
     }
+|
+    <DATABRICKS_QUOTED_STRING>
+    {
+        p = SqlParserUtil.stripQuotes(getToken(0).image, "\"", "\"", "\"\"",
+            Casing.UNCHANGED);
+        try {
+            return SqlLiteral.createCharString(p, charSet, getPos());
+        } catch (java.nio.charset.UnsupportedCharsetException e) {
+            throw SqlUtil.newContextException(getPos(),
+                RESOURCE.unknownCharacterSet(charSet));
+        }
+    }
 }
 
 
@@ -8061,6 +8073,11 @@ void NonReservedKeyWord2of3() :
     < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9"])
     (["a"-"z","A"-"Z","0"-"9",":",".","-","_"])*
     >
+|
+    < DATABRICKS_QUOTED_STRING:
+      <DOUBLE_QUOTE> ( (~["\""]) | ("\"\""))* <DOUBLE_QUOTE>
+    >
+
 }
 
 // BigQuery supports single- and double-quoted literals with back-slash
