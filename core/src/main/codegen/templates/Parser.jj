@@ -5474,7 +5474,7 @@ SqlJdbcDataTypeName JdbcOdbcDataTypeName() :
 }
 {
     (<SQL_CHAR> | <CHAR>) { return SqlJdbcDataTypeName.SQL_CHAR; }
-|   (<SQL_VARCHAR> | <VARCHAR>) { return SqlJdbcDataTypeName.SQL_VARCHAR; }
+|   (<SQL_VARCHAR> | <VARCHAR> | <SQL_STRING>) { return SqlJdbcDataTypeName.SQL_VARCHAR; }
 |   (<SQL_DATE> | <DATE>) { return SqlJdbcDataTypeName.SQL_DATE; }
 |   (<SQL_TIME> | <TIME>) { return SqlJdbcDataTypeName.SQL_TIME; }
 |   (<SQL_TIMESTAMP> | <TIMESTAMP>) { return SqlJdbcDataTypeName.SQL_TIMESTAMP; }
@@ -7841,6 +7841,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < SQL_TSI_YEAR: "SQL_TSI_YEAR" >
 |   < SQL_VARBINARY: "SQL_VARBINARY" >
 |   < SQL_VARCHAR: "SQL_VARCHAR" >
+|   < SQL_STRING: "STRING" >
 |   < SQRT: "SQRT" >
 |   < START: "START" >
 |   < STATE: "STATE" >

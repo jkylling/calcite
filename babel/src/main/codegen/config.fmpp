@@ -448,6 +448,7 @@ data: {
       "STDDEV_POP"
       "STDDEV_SAMP"
 #     "STREAM"
+      "SQL_STRING"
       "SUBMULTISET"
       "SUBSET"
       "SUBSTRING"
