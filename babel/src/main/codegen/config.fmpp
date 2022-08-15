@@ -274,7 +274,7 @@ data: {
       "LARGE"
       "LAST"
       "LAST_VALUE"
-#     "LATERAL"
+      "LATERAL"
       "LEAD"
       "LEADING"
 #     "LEAVE" # not a keyword in Calcite
