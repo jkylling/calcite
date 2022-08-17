@@ -254,7 +254,7 @@ data: {
       "INTEGER"
 #     "INTERSECT"
       "INTERSECTION"
-#     "INTERVAL"
+      "INTERVAL"
 #     "INTO"
       "IS"
       "ISOLATION"
