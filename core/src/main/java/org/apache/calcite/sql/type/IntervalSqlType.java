@@ -56,9 +56,11 @@ public class IntervalSqlType extends AbstractSqlType {
 
   //~ Methods ----------------------------------------------------------------
 
-  @Override protected void generateTypeString(StringBuilder sb, boolean withDetail) {
+  @Override
+  protected void generateTypeString(StringBuilder sb, boolean withDetail) {
     sb.append("INTERVAL ");
-    final SqlDialect dialect = AnsiSqlDialect.DEFAULT;
+    final SqlDialect dialect =
+        new AnsiSqlDialect(AnsiSqlDialect.DEFAULT_CONTEXT.withDataTypeSystem(typeSystem));
     final SqlWriterConfig config = SqlPrettyWriter.config()
         .withAlwaysUseParentheses(false)
         .withSelectListItemsOnSeparateLines(false)
@@ -70,7 +72,8 @@ public class IntervalSqlType extends AbstractSqlType {
     sb.append(new SqlString(dialect, sql).getSql());
   }
 
-  @Override public SqlIntervalQualifier getIntervalQualifier() {
+  @Override
+  public SqlIntervalQualifier getIntervalQualifier() {
     return intervalQualifier;
   }
 
@@ -137,11 +140,13 @@ public class IntervalSqlType extends AbstractSqlType {
     return (IntervalSqlType) intervalType;
   }
 
-  @Override public int getPrecision() {
+  @Override
+  public int getPrecision() {
     return intervalQualifier.getStartPrecision(typeSystem);
   }
 
-  @Override public int getScale() {
+  @Override
+  public int getScale() {
     return intervalQualifier.getFractionalSecondPrecision(typeSystem);
   }
 }

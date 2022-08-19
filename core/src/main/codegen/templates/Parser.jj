@@ -4672,6 +4672,7 @@ SqlLiteral IntervalLiteral() :
     final SqlIntervalQualifier intervalQualifier;
     int sign = 1;
     final Span s;
+    SqlNode e = null;
 }
 {
     <INTERVAL> { s = span(); }
@@ -4680,11 +4681,25 @@ SqlLiteral IntervalLiteral() :
     |
         <PLUS> { sign = 1; }
     ]
+    (
+    (
     <QUOTED_STRING> { p = token.image; }
     intervalQualifier = IntervalQualifier() {
         return SqlParserUtil.parseIntervalLiteral(s.end(intervalQualifier),
             sign, p, intervalQualifier);
     }
+    )
+    |
+    (
+    <QUOTE> {}
+    e = UnsignedNumericLiteral()
+    intervalQualifier = IntervalQualifier() {
+        return SqlParserUtil.parseIntervalLiteral(s.end(intervalQualifier),
+            sign, e.toString(), intervalQualifier);
+    }
+    <QUOTE> {}
+    )
+    )
 }
 
 /** Parses an interval literal (e.g. {@code INTERVAL '2:3' HOUR TO MINUTE})
@@ -4706,6 +4721,12 @@ SqlNode IntervalLiteralOrExpression() :
         <PLUS> { sign = 1; }
     ]
     (
+    /*
+        <QUOTED_STRING> {
+            return SqlLibraryOperators.INFIX_CAST.createCall(s.end(this), SqlLiteral.createCharString(token.image, s.pos()));
+        }
+   |
+   */
         // literal (with quoted string)
         <QUOTED_STRING> { p = token.image; }
         intervalQualifier = IntervalQualifier() {
