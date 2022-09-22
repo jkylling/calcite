@@ -94,6 +94,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -321,16 +322,45 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
     return Ord.of(newOrdinal, newField.getType());
   }
 
-  private RelDataTypeField getNewInputFieldByNewOrdinal(int newOrdinal) {
-    return getCurrentRelOrThrow().getInputs().stream()
-          .map(this::getNewForOldRel)
-          .flatMap(node -> node.getRowType().getFieldList().stream())
-          .skip(newOrdinal)
-          .findFirst()
-          .orElseThrow(NoSuchElementException::new);
+  private Ord<RelDataType> getNewFieldForOldInput2(int oldOrdinal, int innerOrdinal,
+      RelDataType access, int oldOrdinal2) {
+    // sum of predecessors post flatten sizes points to new ordinal
+    // of flat field or first field of flattened struct
+    final int postFlatteningOrdinal = getCurrentRelOrThrow().getInputs().stream()
+        .flatMap(node -> node.getRowType().getFieldList().stream())
+        .limit(oldOrdinal)
+        .map(RelDataTypeField::getType)
+        .mapToInt(this::postFlattenSize)
+        .sum();
+
+    final int postFlatteningOrdinal2 = access.getFieldList().stream()
+        .limit(oldOrdinal2)
+        .map(RelDataTypeField::getType)
+        .mapToInt(this::postFlattenSize)
+        .sum();
+
+
+    final int newOrdinal = postFlatteningOrdinal + postFlatteningOrdinal2 + innerOrdinal;
+    // NoSuchElementException may be thrown because of two reasons:
+    // 1. postFlattenSize() didn't predict well
+    // 2. innerOrdinal has wrong value
+    RelDataTypeField newField = getNewInputFieldByNewOrdinal(newOrdinal);
+    return Ord.of(newOrdinal, newField.getType());
   }
 
-  /** Returns whether the old field at index {@code fieldIdx} was not flattened. */
+
+  private RelDataTypeField getNewInputFieldByNewOrdinal(int newOrdinal) {
+    return getCurrentRelOrThrow().getInputs().stream()
+        .map(this::getNewForOldRel)
+        .flatMap(node -> node.getRowType().getFieldList().stream())
+        .skip(newOrdinal)
+        .findFirst()
+        .orElseThrow(NoSuchElementException::new);
+  }
+
+  /**
+   * Returns whether the old field at index {@code fieldIdx} was not flattened.
+   */
   private boolean noFlatteningForInput(int fieldIdx) {
     final List<RelNode> inputs = getCurrentRelOrThrow().getInputs();
     int fieldCnt = 0;
@@ -636,6 +666,18 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
         for (int innerOrdinal = 0; innerOrdinal < flattenFieldsCount; innerOrdinal++) {
           Ord<RelDataType> newField = getNewFieldForOldInput(oldOrdinal, innerOrdinal);
           RexInputRef newRef = new RexInputRef(newField.i, newField.e);
+          flattenedExps.add(Pair.of(newRef, fieldName));
+        }
+      } else if (exp instanceof RexFieldAccess) {
+        RexFieldAccess access = (RexFieldAccess) exp;
+        final int oldOrdinal = 1;//((RexInputRef) access.getReferenceExpr()).getIndex(); //access
+        // .getField().getIndex();
+        final int flattenFieldsCount = postFlattenSize(exp.getType());
+        for (int innerOrdinal = 0; innerOrdinal < flattenFieldsCount; innerOrdinal++) {
+          Ord<RelDataType> newField = getNewFieldForOldInput2(oldOrdinal, innerOrdinal,
+              access.getReferenceExpr().getType(), access.getField().getIndex());
+          RexInputRef newRef = new RexInputRef(newField.i, newField.e);
+//          RexFieldAccess newAccess = new RexFieldAccess(newRef, );
           flattenedExps.add(Pair.of(newRef, fieldName));
         }
       } else if (isConstructor(exp) || exp.isA(SqlKind.CAST)) {
